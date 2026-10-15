@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: code-arena-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_STRING
+        sync: false
+      - key: JWTKEY
+        sync: false
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
