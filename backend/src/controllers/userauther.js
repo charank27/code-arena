@@ -5,6 +5,15 @@ const validate=require("../utils/validator")
 const bcrypt=require("bcrypt")
 const jwt=require("jsonwebtoken")
 require("dotenv").config()
+const isProduction = process.env.NODE_ENV === "production" || !!process.env.FRONTEND_URL;
+const getCookieOptions = (extra = {}) => ({
+    maxAge: 3600 * 1000,
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    ...extra
+});
+
 const register=async(req,res)=>{
     try{
         //vlidate pass email
@@ -18,9 +27,10 @@ const register=async(req,res)=>{
         const reply={
             firstName:user.firstName,
             emailId:user.emailId,
-            _id:user._id
+            _id:user._id,
+            role:user.role
         }
-        res.cookie("token",token,{maxAge:3600*1000}) //in millisec
+        res.cookie("token",token,getCookieOptions())
         
         res.status(201).json({
             user:reply,
@@ -41,7 +51,7 @@ const login=async(req,res)=>{
         if (!user) {
             throw new Error("Invalid credentials");
         }
-        const match=bcrypt.compare(password,user.password)
+        const match=await bcrypt.compare(password,user.password)
         if(!match){
              throw new Error("invalid credentials")
         }
@@ -49,9 +59,10 @@ const login=async(req,res)=>{
         const reply={
             firstName:user.firstName,
             emailId:user.emailId,
-            _id:user._id
+            _id:user._id,
+            role:user.role
         }
-        res.cookie("token",token,{maxAge:3600*1000})
+        res.cookie("token",token,getCookieOptions())
         res.status(201).json({
             user:reply,
             message:"Logged in sucessfully"
@@ -63,13 +74,16 @@ const login=async(req,res)=>{
 }
 const logout=async(req,res)=>{
     try{
-
         //validate token
         const {token}=req.cookies;
-        const payload=jwt.decode(token)
-        await redisClient.set(`token:${token}`,"bloked")
-        await redisClient.expireAt(`token:${token}`,payload.exp)
-        res.cookie("token",null,{expires:new Date(Date.now())})
+        if (token) {
+            const payload=jwt.decode(token);
+            if (payload && payload.exp) {
+                await redisClient.set(`token:${token}`,"bloked");
+                await redisClient.expireAt(`token:${token}`,payload.exp);
+            }
+        }
+        res.cookie("token","",getCookieOptions({ maxAge: 0, expires: new Date(0) }));
         res.send("Logged out sucessfully")
     }catch(err){
         res.status(503).send("Error: "+err.message)
@@ -85,7 +99,7 @@ const adminRegister=async(req,res)=>{
         req.body.role='admin';
         const user=await User.create(req.body)
         const token=jwt.sign({_id:user._id, emailId:emailId,role:user.role},process.env.JWTKEY,{expiresIn:3600})
-        res.cookie("token",token,{maxAge:3600*1000}) //in millisec
+        res.cookie("token",token,getCookieOptions())
         res.status(201).send("User registered sucessfully")
 
     }catch(err){

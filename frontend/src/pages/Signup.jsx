@@ -45,7 +45,13 @@ function Signup() {
   const onSubmit = (data) => {
     dispatch(registerUser(data));
   };
-
+  if(loading){
+    return(
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
       <div className="card w-full max-w-md bg-base-100 shadow-2xl">

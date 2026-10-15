@@ -20,7 +20,8 @@ const createProblem = async (req, res) => {
       console.log(testResult);
 
       for (let i = 0; i < testResult.length; i++) {
-        const actual = testResult[i].stdout.trim();
+      const actual = (testResult[i].stdout || "").trim();
+        
         const expected = visibleTestcases[i].output.trim();
 
         if (actual !== expected) {
@@ -110,7 +111,7 @@ const getProblemById=async(req,res)=>{
       return res.status(400).send("Misssing Id")
     }
     
-    const que=await Problem.findById(id).select("_id title description difficulty visibleTestcases startCod referenceSolution");
+    const que=await Problem.findById(id).select("_id title description difficulty visibleTestcases startCode referenceSolution");
     if(!que){
       return res.status(404).send("Problem not found")
     }
