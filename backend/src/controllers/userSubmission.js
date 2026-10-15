@@ -2,9 +2,9 @@ const { Problem } = require("../models/problem");
 const Submission = require("../models/submission");
 const User = require("../models/user");
 const {
-    getLanguageId,  // This is the correct function name from your utility
+    getLanguageId,
     submitBatch
-} = require("../utils/problemUtility");
+} = require("../utils/ProblemUtility");
 
 const runCode = async (req, res) => {
     // 
